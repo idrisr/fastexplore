@@ -1,12 +1,12 @@
 import explore
-import pytest
 from fastcore.basics import store_attr
 
-@pytest.fixture
-def dummy(a=1, b=2):
-    """ store_attr doesnt make sense not being called from a method """
-    with pytest.raises(AttributeError):
-        store_attr()
+
+""" 
+Basically store_attr will store a bunch of attributes onto an object.
+It uses magic like going one up the stack frame, and then reading the variabels
+in that frame looking for what to attach.
+"""
 
 def test_with_name():
     """ if the args isnt passed in, you need to be explicit """
