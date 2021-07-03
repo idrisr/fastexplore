@@ -19,7 +19,6 @@ import numpy as np
 
 class ImageTransform(Transform):
     def encodes(self, fn: Path): return PILImage.create(fn)
-    #  return ImageTransform
 
 @pytest.fixture
 def test_fn(): return Path(os.getcwd()) / "img/8533.png"
@@ -122,8 +121,7 @@ def test_can_show(test_fn):
 def test_bboxlabeler(input):
     """ 
     this thing doesn't have an encodes
-    what's the logic behind that?
-    and it has a decode attribute...?
+    what's the logic behind that?  and it has a decode attribute...?
     """
 
     assert BBoxLabeler()(input) == input
