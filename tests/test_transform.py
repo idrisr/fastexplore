@@ -1,20 +1,22 @@
 import os
 import pytest
 import tempfile
+import torch
 
 from matplotlib.artist import Artist
 from fastcore.transform import Transform
+from fastcore.dispatch import TypeDispatch
 from fastai.vision.core import PILImage
+from fastai.vision.core import BBoxLabeler, PointScaler
 from fastai.data.transforms import ToTensor
 from pathlib import Path
 from torch import tensor
 from torch import Tensor
-import torch
+from types import FunctionType
+import numpy as np
 
 #  https://docs.fast.ai/tutorial.pets.html
 
-#  @pytest.fixture
-#  def ImageTransform():
 class ImageTransform(Transform):
     def encodes(self, fn: Path): return PILImage.create(fn)
     #  return ImageTransform
@@ -38,7 +40,7 @@ def A1():
 def A2():
     class A(Transform):
         def encodes(self, a:int): return a+1
-        def encodes(self, a:list): return a.append('z')
+        def encodes(self, a:list): a.append('z'); return a
     return A
 
 def test_simple(A):
@@ -62,11 +64,9 @@ def test_annotate(A1):
 def test_more_annotations(A2):
     """ int and list """
     a = A2()
-    # encodes == __call__
-    a.encodes('1') == a('1')
-    a.encodes == a.__call__
-    a.encodes(1) == 2
-    a.encodes(['a']) == ['a', 'z']
+    assert a.encodes('1') == a('1')
+    assert a.encodes(1) == 2
+    assert a.encodes(['a']) == ['a', 'z']
 
 
 def test_filename_to_image(test_fn):
@@ -101,7 +101,11 @@ def test_to_tensor(test_fn):
     assert hasattr(ImageTransform, 'order')
 
 def test_can_show(test_fn):
-    """ I think all the show methods return a matplotlib axes / subaxes """
+    """ 
+    I think all the show methods return a matplotlib axes / subaxes 
+    by the way there are a lot of non-Transform classes that also have a
+    show method 
+    """
 
     timg = ImageTransform()(test_fn)
     t = ToTensor()(timg)
@@ -110,7 +114,31 @@ def test_can_show(test_fn):
     assert isinstance(timg.show(), Artist)
     assert isinstance(t.show(), Artist)
 
-#  @ToTensor
-#  def encodes(self, o:PILBase): return o._tensor_cls(image2tensor(o))
-#  @ToTensor
-#  def encodes(self, o:PILMask): return o._tensor_cls(image2tensor(o)[0])
+    assert isinstance(ToTensor.encodes, TypeDispatch)
+    assert isinstance(ToTensor.decodes, TypeDispatch)
+    assert isinstance(ToTensor.setups, TypeDispatch)
+
+@pytest.mark.parametrize("input", [1, 'a', [], (1, 2, 3,), {'a':1, 'b':2}])
+def test_bboxlabeler(input):
+    """ 
+    this thing doesn't have an encodes
+    what's the logic behind that?
+    and it has a decode attribute...?
+    """
+
+    assert BBoxLabeler()(input) == input
+    assert BBoxLabeler().encodes(input) == input
+
+@pytest.mark.parametrize("type_", [BBoxLabeler, PointScaler, Transform])
+def test_transform_decode(type_):
+    """ 
+    What is with this decode function that comes from Transform?
+    It's not a TypeDispatch
+    """ 
+    b = type_
+    assert isinstance(b.encodes, TypeDispatch)
+    assert isinstance(b.decodes, TypeDispatch)
+    assert isinstance(b.setups, TypeDispatch)
+    assert not isinstance(b.decode, TypeDispatch)
+    assert hasattr(b, 'decode')
+    assert isinstance(b.decode, FunctionType)

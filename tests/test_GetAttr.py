@@ -2,7 +2,7 @@ from fastcore.basics import GetAttr
 import pytest
 
 """
-Everything in _xtra will be proxied over to default
+Everything in _xtra will be proxied over to _default
 """
 
 @pytest.fixture
