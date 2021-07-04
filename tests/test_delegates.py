@@ -11,17 +11,15 @@ function or from the init of a super class
 # Q: what use when to is None?
 # A: when used as a class decorator for a subclass
 
-#    delegates()
-# keep
-# but
-
+# delegates()
+#     keep
+#     but
 
 @pytest.fixture
 def A():
     class A:
         def __init__(self, x=3, y=2, z=1): pass
     return A
-
 
 @pytest.fixture()
 def B(A):
