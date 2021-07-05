@@ -13,6 +13,7 @@ def T():
     class T(Transform):
         def __init__(self, x): self.x = x
         def encodes(self, o): return self.x + o, 'a'
+        # not a real inverse, but so what
         def decodes(self, o): return self.x - o, 'b'
     return T
 
@@ -21,6 +22,7 @@ def U():
     class U(Transform):
         def __init__(self, x): self.x = x
         def encodes(self, o): return self.x + o, 'a'
+        # not a real inverse, but so what
         def decodes(self, o): return self.x - o, 'b'
     return U
 
@@ -59,3 +61,12 @@ def test_train(train_tl, i, exp):
 def test_valid(valid_tl, i, exp):
     assert isinstance(valid_tl, TfmdLists)
     assert valid_tl[i] == exp
+
+
+@mark.parametrize('i,exp', [
+    [0,(1, 'b')], 
+    [5,(-4, 'b')],
+    [9,(-8, 'b')]
+    ])
+def test_train_decode(i,exp,train_tl):
+    assert train_tl.decode(i) == exp
