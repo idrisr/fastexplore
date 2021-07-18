@@ -4,7 +4,7 @@ import pytest
 
 """
 replaces **kwargs in a signature with all of the variables from another
-function or from the init of a super class
+function or from the init of the super class
 """
 
 # used as func and class decorator

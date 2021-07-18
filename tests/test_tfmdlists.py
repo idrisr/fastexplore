@@ -62,7 +62,6 @@ def test_valid(valid_tl, i, exp):
     assert isinstance(valid_tl, TfmdLists)
     assert valid_tl[i] == exp
 
-
 @mark.parametrize('i,exp', [
     [0,(1, 'b')], 
     [5,(-4, 'b')],

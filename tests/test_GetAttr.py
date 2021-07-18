@@ -3,6 +3,8 @@ import pytest
 
 """
 Everything in _xtra will be proxied over to _default
+
+pass a set of attributes over to a contained object
 """
 
 @pytest.fixture

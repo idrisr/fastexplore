@@ -2,18 +2,25 @@ import os
 import pytest
 import tempfile
 import torch
+import math
+import numpy as np
 
 from matplotlib.artist import Artist
 from fastcore.transform import Transform
 from fastcore.dispatch import TypeDispatch
-from fastai.vision.core import PILImage
-from fastai.vision.core import BBoxLabeler, PointScaler
+from fastai.vision.all import *
 from fastai.data.transforms import ToTensor
 from pathlib import Path
 from torch import tensor
 from torch import Tensor
-from types import FunctionType
-import numpy as np
+from types import MethodType, FunctionType
+
+from hypothesis.strategies import *
+from hypothesis import given
+import typing
+
+tokill = [_ for _ in globals().keys() if _.startswith('test')]
+for _ in tokill: del globals()[_]
 
 #  https://docs.fast.ai/tutorial.pets.html
 
@@ -21,17 +28,17 @@ class ImageTransform(Transform):
     def encodes(self, fn: Path): return PILImage.create(fn)
 
 @pytest.fixture
-def test_fn(): return Path(os.getcwd()) / "img/8533.png"
+def test_fn(): return Path(__file__).parent.parent / "img/8533.png"
 
 @pytest.fixture
 def A():
-    class A(Transform):
+    class A(Transform): 
         def encodes(self, a): return a+1
     return A
 
-@pytest.fixture
+@pytest.fixture(scope="module")
 def A1():
-    class A(Transform):
+    class A(Transform): 
         def encodes(self, a:int): return a+1
     return A
 
@@ -66,7 +73,6 @@ def test_more_annotations(A2):
     assert a.encodes('1') == a('1')
     assert a.encodes(1) == 2
     assert a.encodes(['a']) == ['a', 'z']
-
 
 def test_filename_to_image(test_fn):
     """
@@ -105,7 +111,6 @@ def test_can_show(test_fn):
     by the way there are a lot of non-Transform classes that also have a
     show method 
     """
-
     timg = ImageTransform()(test_fn)
     t = ToTensor()(timg)
 
@@ -117,21 +122,24 @@ def test_can_show(test_fn):
     assert isinstance(ToTensor.decodes, TypeDispatch)
     assert isinstance(ToTensor.setups, TypeDispatch)
 
+
 @pytest.mark.parametrize("input", [1, 'a', [], (1, 2, 3,), {'a':1, 'b':2}])
 def test_bboxlabeler(input):
     """ 
     this thing doesn't have an encodes
     what's the logic behind that?  and it has a decode attribute...?
     """
-
     assert BBoxLabeler()(input) == input
     assert BBoxLabeler().encodes(input) == input
+
 
 @pytest.mark.parametrize("type_", [BBoxLabeler, PointScaler, Transform])
 def test_transform_decode(type_):
     """ 
-    What is with this decode function that comes from Transform?
-    It's not a TypeDispatch
+    Q: What is with this decode function that comes from Transform?  It's not a
+    TypeDispatch
+    A: it's what you call to decode. decodes is what you use to implement. The
+    difference is that you need a TypeDispatch in between?
     """ 
     b = type_
     assert isinstance(b.encodes, TypeDispatch)
@@ -140,3 +148,38 @@ def test_transform_decode(type_):
     assert not isinstance(b.decode, TypeDispatch)
     assert hasattr(b, 'decode')
     assert isinstance(b.decode, FunctionType)
+
+
+@given(floats(), integers())
+def test_tuples(A1, f, i):
+    # only passing an int by itself passes. crazy
+    assert A1.encodes((i)) == (i+1)
+    assert not A1.encodes((i, f)) == (i+1, f)
+
+
+@given(integers(), integers(), floats(allow_nan=False))
+def test_tuples4(i1, i2, f):
+    # you only pass in one thing. but that one thing can be a tuple.
+    # if the element's type matches, youll get encoded.
+    # otherwise you're just a noop. whoa, kind of mind blowing
+    class A(Transform):
+        def encodes(self, x: int): return x+1
+
+    a = A()
+    assert a(i1)          == i1+1
+    assert a(f)           == f 
+    assert a((i1))        == i1+1
+    assert a((i1, i2))    == (i1+1, i2+1)
+    assert a((i1, i2, f)) == (i1+1, i2+1, f)
+
+
+@given(floats(), floats())
+def test_tuples2(A1, f1, f2):
+    # pass in two floats, both come back 
+    assert A1.encodes((f1, f2)) == (f1, f2)
+
+@given(floats(), floats())
+def test_tuples3(A1, f1, f2):
+    # pass in two floats to Resize. The googles do nothing
+    Resize.goggles = Resize.encodes
+    assert Resize(224).goggles((f1, f2)) == (f1, f2)
