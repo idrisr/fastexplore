@@ -183,3 +183,9 @@ def test_tuples3(A1, f1, f2):
     # pass in two floats to Resize. The googles do nothing
     Resize.goggles = Resize.encodes
     assert Resize(224).goggles((f1, f2)) == (f1, f2)
+
+@given(floats(), floats())
+def test_bbox(A1, f1, f2):
+    # pass in two floats to Resize. The googles do nothing
+    Resize.goggles = Resize.encodes
+    assert Resize(224).goggles((f1, f2)) == (f1, f2)

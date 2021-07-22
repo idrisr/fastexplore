@@ -67,13 +67,15 @@ def test_Resize(l):
     Resize(224)(bbox)
 
 @given(list_mult(4))
-def test_Resize(l):
+def test_point_scale(l):
     # how to get a az attribute on this thing??
     img  = PILImage.create(mnist_fn)
-    bbox = TensorBBox.create(img)
+    bbox = TensorBBox.create(img, img_size=(100, 100, ))
     ps = PointScaler(224)
 
-    # how to get a az attribute on this thing??
-    # here's one way
-    ps.sz = (100, 100)
-    ps(bbox)
+    # how to get a sz attribute on this thing??
+    with pytest.raises(AttributeError):
+        ps(bbox)
+
+    # pass the image in the tuple first
+    ps((img, bbox))

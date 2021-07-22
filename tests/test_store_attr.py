@@ -3,7 +3,7 @@ from fastcore.basics import store_attr
 
 """ 
 Basically store_attr will store a bunch of attributes onto an object.
-It uses magic like going one up the stack frame, and then reading the variabels
+It uses magic like going one up the stack frame, and then reading the variables
 in that frame looking for what to attach.
 """
 
