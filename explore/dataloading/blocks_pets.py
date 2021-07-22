@@ -49,13 +49,12 @@ def l2():
     return dblock, dblock.dataloaders(path)
 
 def l3():
-
     # same as type_tfms for datablock
     tfms = [[PILImage.create], [Transform(is_cat)]]
     files = get_image_files(path)
     splits = RandomSplitter(0.2, seed=42)(files)
     dsets = Datasets(files, tfms, splits=splits)
-    dls = dsets.dataloaders(after_item=[ToTensor, Resize(224), ToTensor],
+    dls = dsets.dataloaders(after_item=[ToTensor, Resize(224), ],
             after_batch=[IntToFloatTensor])
     return dsets, dls
 
